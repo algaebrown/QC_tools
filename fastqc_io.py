@@ -70,7 +70,7 @@ if __name__=='__main__':
     parser = option_parser()
     (options, args) = parser.parse_args()
     
-    fastqc_files = options.input.split(',')
+    fastqc_files = options.input.split(' ')
     
     # check if file exist
     for f in fastqc_files:

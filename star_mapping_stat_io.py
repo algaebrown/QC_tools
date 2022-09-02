@@ -11,18 +11,25 @@ def read_mapstats(fname):
     df = pd.DataFrame([l.rstrip().split('|\t') for l in lines ]).set_index(0)
     df.index = [i.replace('  ', '') for i in df.index]
     return df
-def concat_mapstats(filenames):
+def concat_mapstats(filenames, names = None):
     ''' given a list of filenames, read all of them and concat into a pd.DataFrame '''
-    for f in filenames:
-        df = read_mapstats(f)
-        df.loc['STAR Log filename'] = [f]
-        df.columns = [os.path.basename(f).split('.')[1]]
-        mapping_df.append(df)
+    mapping_df = []
+    for i,f in enumerate(filenames):
+        try:
+            df = read_mapstats(f)
+            df.loc['STAR Log filename'] = [f]
+            df.columns = [os.path.basename(f).split('.')[1]]
+            if names:
+                df.loc['name'] = names[i]
+            mapping_df.append(df)
+        except Exception as e:
+            print(e)
+            print(f)
     total = pd.concat(mapping_df, axis = 1).T
     
     total.columns = [c.rstrip(' ').strip(' ') for c in total.columns]
     
-    return total
+    return change_data_type(total)
 
 def change_data_type(total):
     ''' given a dataframe, change each columns to appropriate datatype '''
@@ -79,13 +86,13 @@ if __name__=='__main__':
     parser = option_parser()
     (options, args) = parser.parse_args()
     
-    log_files = options.input.split(',')
+    log_files = options.input.split(' ')
     
     min_reads=options.nread
     unique_map_rate=options.unique
     min_read_length=options.rlen
     
-    total = change_data_type(concat_mapstats(log_files))
+    total = concat_mapstats(log_files)
     
     # check input reads
     if total['Number of input reads'].le(min_reads).any():
